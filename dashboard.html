@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITTA - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css?v=3">
+</head>
+<body>
+
+    <nav class="navbar"></nav>
+
+    <div class="dashboard-layout">
+        <main>
+            <header class="dashboard-header">
+                <h1 id="greetingText">Selamat Datang</h1>
+                <p>Berikut adalah ringkasan informasi operasional bahan ajar hari ini.</p>
+            </header>
+
+            <section class="monitoring-section">
+                <h2>Monitoring Progress DO Bahan Ajar</h2>
+                <div class="monitoring-grid" id="monitoringCards">
+                    <!-- Cards will be rendered by JS -->
+                </div>
+            </section>
+
+            <div class="sections-grid">
+                <section class="rekap-section card">
+                    <h2>Rekap Bahan Ajar</h2>
+                    <div class="table-container">
+                        <table id="rekapTable">
+                            <thead>
+                                <tr>
+                                    <th>Kode Barang</th>
+                                    <th>Nama Barang</th>
+                                    <th>Jenis</th>
+                                    <th>Stok</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Table content via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="history-section card">
+                    <h2>Histori Transaksi Terakhir</h2>
+                    <div class="table-container">
+                        <table id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th>No DO</th>
+                                    <th>Tanggal</th>
+                                    <th>Item</th>
+                                    <th>Jumlah</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Table content via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/data.js?v=3"></script>
+    <script src="js/script.js?v=3"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user')) || { name: "Pengguna" };
+            document.getElementById('greetingText').textContent = getGreeting(user.name);
+
+            // Render Monitoring Cards
+            const monitoringContainer = document.getElementById('monitoringCards');
+            dataMonitoringDO.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card monitoring-card';
+                card.style.borderLeftColor = item.color;
+                card.innerHTML = `
+                    <div class="card-status">${item.status}</div>
+                    <div class="card-number">${item.count}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${Math.random() * 100}%; background-color: ${item.color}"></div>
+                    </div>
+                `;
+                monitoringContainer.appendChild(card);
+            });
+
+            // Render Rekap Table (Low Stock)
+            const rekapTableBody = document.querySelector('#rekapTable tbody');
+            dataBahanAjar.sort((a, b) => a.stok - b.stok).forEach(item => {
+                const row = document.createElement('tr');
+                const status = item.stok < 50 ? '<span class="status-restock">Restock</span>' : '<span class="status-aman">Aman</span>';
+                row.innerHTML = `
+                    <td>${item.kodeBarang}</td>
+                    <td>${item.namaBarang}</td>
+                    <td>${item.jenis}</td>
+                    <td>${item.stok}</td>
+                    <td>${status}</td>
+                `;
+                rekapTableBody.appendChild(row);
+            });
+
+            // Render History Table
+            const historyTableBody = document.querySelector('#historyTable tbody');
+            dataHistoriTransaksi.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${item.noDO}</strong></td>
+                    <td>${item.tanggal}</td>
+                    <td>${item.item}</td>
+                    <td>${item.jumlah}</td>
+                    <td><span class="status-badge">${item.status}</span></td>
+                `;
+                historyTableBody.appendChild(row);
+            });
+        });
+    </script>
+</body>
+</html>
