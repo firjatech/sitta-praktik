@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Stok - Universitas Terbuka</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header class="navbar">
+            <div class="logo-container">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <span>Manajemen Stok</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Beranda</a>
+                <a href="stok.html" class="active">Stok</a>
+                <a href="tracking.html">Tracking DO</a>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="page-header">
+                <h1>Daftar Bahan Ajar</h1>
+                <button class="btn btn-primary" @click="openAddModal">
+                    <i class="fa-solid fa-plus"></i> Tambah Bahan Ajar
+                </button>
+            </div>
+
+            <!-- Filters Area -->
+            <div class="filters-bar">
+                <div class="filter-item">
+                    <label>Filter UPBJJ:</label>
+                    <select v-model="filterUpbjj" class="form-control">
+                        <option value="">Semua UPBJJ</option>
+                        <option v-for="upbjj in upbjjList" :key="upbjj" :value="upbjj">
+                            {{ upbjj }}
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label>Filter Kategori (Pilih UPBJJ dulu):</label>
+                    <select v-model="filterKategori" class="form-control" :disabled="!filterUpbjj">
+                        <option value="">Semua Kategori</option>
+                        <option v-for="kat in kategoriList" :key="kat" :value="kat">
+                            {{ kat }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label>Sortir Berdasarkan:</label>
+                    <select v-model="sortBy" class="form-control">
+                        <option value="namaMk">Judul (A-Z)</option>
+                        <option value="qty">Stok (Terkecil - Terbesar)</option>
+                        <option value="harga">Harga (Terkecil - Terbesar)</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group" style="margin-top: 1.5rem;">
+                    <label class="checkbox-label">
+                        <input type="radio" v-model="filterStatus" value="all"> Semua Status
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" v-model="filterStatus" value="menipis"> Stok < Safety (Menipis)
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" v-model="filterStatus" value="kosong"> Stok = 0 (Kosong)
+                    </label>
+                </div>
+
+                <div style="margin-top: 1.5rem; margin-left: auto;">
+                    <button class="btn" @click="resetFilters">
+                        <i class="fa-solid fa-rotate-right"></i> Reset Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Area -->
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kode MK</th>
+                            <th>Judul Mata Kuliah</th>
+                            <th>Kategori</th>
+                            <th>UPBJJ</th>
+                            <th>Lokasi Rak</th>
+                            <th>Harga</th>
+                            <th>Qty</th>
+                            <th>Safety</th>
+                            <th>Status</th>
+                            <th>Catatan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="filteredAndSortedStok.length === 0">
+                            <td colspan="10" style="text-align: center; padding: 2rem;">Tidak ada data yang sesuai dengan filter.</td>
+                        </tr>
+                        <tr v-for="(item, index) in filteredAndSortedStok" :key="item.kodeMk + '-' + index">
+                            <td><strong>{{ item.kodeMk }}</strong></td>
+                            <td>{{ item.namaMk }}</td>
+                            <td>{{ item.kategori }}</td>
+                            <td>{{ item.upbjj }}</td>
+                            <td>{{ item.lokasiRak }}</td>
+                            <td>Rp {{ formatRupiah(item.harga) }}</td>
+                            <td><strong>{{ item.qty }}</strong></td>
+                            <td>{{ item.safety }}</td>
+                            <td>
+                                <!-- Conditional Rendering (v-if / v-else-if / v-else) -->
+                                <span v-if="item.qty === 0" class="status-badge status-kosong">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Kosong
+                                </span>
+                                <span v-else-if="item.qty < item.safety" class="status-badge status-menipis">
+                                    <i class="fa-solid fa-circle-exclamation"></i> Menipis
+                                </span>
+                                <span v-else class="status-badge status-aman">
+                                    <i class="fa-solid fa-check-circle"></i> Aman
+                                </span>
+                            </td>
+                            <!-- v-html untuk render HTML string dari data mentah -->
+                            <td v-html="item.catatanHTML"></td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" @click="openEditModal(item)">
+                                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Data Modal -->
+            <!-- v-show digunakan karena modal sering ditoggle show/hide -->
+            <div class="modal-overlay" v-show="showAddModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Tambah Bahan Ajar</h2>
+                        <button class="close-btn" @click="closeModals"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form @submit.prevent="saveAdd">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Kode MK</label>
+                                <input type="text" class="form-control" v-model="formData.kodeMk" required placeholder="Contoh: EKMA4116">
+                            </div>
+                            <div class="form-group">
+                                <label>Judul Mata Kuliah</label>
+                                <input type="text" class="form-control" v-model="formData.namaMk" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Kategori</label>
+                                <select v-model="formData.kategori" class="form-control" required>
+                                    <option value="" disabled>Pilih Kategori</option>
+                                    <option v-for="kat in kategoriList" :value="kat">{{ kat }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>UPBJJ</label>
+                                <select v-model="formData.upbjj" class="form-control" required>
+                                    <option value="" disabled>Pilih UPBJJ</option>
+                                    <option v-for="upbjj in upbjjList" :value="upbjj">{{ upbjj }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Lokasi Rak</label>
+                            <input type="text" class="form-control" v-model="formData.lokasiRak" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Jumlah Stok (Qty)</label>
+                                <input type="number" class="form-control" v-model.number="formData.qty" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Safety Stock</label>
+                                <input type="number" class="form-control" v-model.number="formData.safety" required min="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Catatan (Mendukung tag HTML, misal: &lt;b&gt;teks&lt;/b&gt;)</label>
+                            <input type="text" class="form-control" v-model="formData.catatanHTML">
+                        </div>
+                        <div style="text-align: right; margin-top: 1rem;">
+                            <button type="submit" class="btn btn-primary">Simpan Data</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Edit Data Modal -->
+            <div class="modal-overlay" v-show="showEditModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Edit Bahan Ajar: {{ formData.kodeMk }}</h2>
+                        <button class="close-btn" @click="closeModals"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form @submit.prevent="saveEdit">
+                        <p style="margin-bottom: 1rem; color: #555;">Mata Kuliah: <strong>{{ formData.namaMk }}</strong> ({{ formData.upbjj }})</p>
+                        
+                        <div class="form-group">
+                            <label>Lokasi Rak</label>
+                            <input type="text" class="form-control" v-model="formData.lokasiRak" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Jumlah Stok (Qty)</label>
+                                <input type="number" class="form-control" v-model.number="formData.qty" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Safety Stock</label>
+                                <input type="number" class="form-control" v-model.number="formData.safety" required min="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Catatan HTML</label>
+                            <input type="text" class="form-control" v-model="formData.catatanHTML">
+                        </div>
+                        <div style="text-align: right; margin-top: 1rem;">
+                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script Data Mentah -->
+    <script src="js/dataBahanAjar.js"></script>
+    <!-- Vue Instance -->
+    <script src="js/stok-app.js"></script>
+</body>
+</html>

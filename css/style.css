@@ -75,15 +75,46 @@ h1, h2, h3, h4 {
 }
 
 .nav-links a {
-    color: var(--gray-600);
+    color: #000000; /* Warna hitam untuk yang tidak diklik */
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.95rem;
     transition: var(--transition);
+    position: relative; /* Dibutuhkan untuk animasi garis */
+    padding-bottom: 4px; /* Memberi jarak antara teks dan garis */
 }
 
-.nav-links a:hover, .nav-links a.active {
-    color: var(--ut-blue);
+/* Membuat elemen garis di bawah teks */
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    width: 0; /* Lebar awal 0 (tidak terlihat) */
+    height: 3px; /* Ketebalan garis */
+    bottom: 0;
+    left: 0;
+    background-color: #2563EB; /* Biru terang agar jelas terlihat */
+    transition: width 0.3s ease-out; /* Efek animasi pelebaran garis */
+    border-radius: 2px;
+}
+
+.nav-links a:hover {
+    color: #2563EB;
+}
+
+/* Menampilkan garis penuh (100%) saat aktif atau diklik */
+.nav-links a.active {
+    color: #2563EB !important; /* Warna biru terang agar tidak disangka hitam */
+}
+.nav-links a.active::after {
+    width: 100%;
+}
+
+/* Keluar (tetap menggunakan merah agar jelas sebagai tombol logout) */
+.nav-links a.logout-link {
+    color: var(--danger) !important;
+}
+.nav-links a.logout-link:hover { 
+    color: #DC2626 !important; 
 }
 
 /* Sidebar for dashboard */

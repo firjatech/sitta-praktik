@@ -345,7 +345,7 @@
                 const data = dataTracking[val];
 
                 if (data) {
-                    renderResult(data);
+                    renderResult(val, data);
                     resultArea.style.display = 'block';
                 } else {
                     openModal('errorModal');
@@ -358,60 +358,60 @@
             resultArea.style.display = 'none';
         });
 
-        function renderResult(data) {
-            document.getElementById('resDO').textContent = data.noDO;
-            document.getElementById('resLayanan').textContent = data.layanan;
-            document.getElementById('resTglKirim').textContent = data.tglKirim;
-            document.getElementById('resEkspedisi').textContent = data.ekspedisi;
-            document.getElementById('resTotal').textContent = formatRupiah(data.totalBayar);
+        function renderResult(noDO, data) {
+            document.getElementById('resDO').textContent = noDO;
+            document.getElementById('resLayanan').textContent = data.paket || "-";
+            document.getElementById('resTglKirim').textContent = data.tanggalKirim || "-";
+            document.getElementById('resEkspedisi').textContent = data.ekspedisi || "-";
+            document.getElementById('resTotal').textContent = formatRupiah(data.total || 0);
             
-            document.getElementById('resStatus').textContent = data.status;
-            document.getElementById('resEstimasi').textContent = data.estimasiTiba;
-            document.getElementById('resSisaHari').textContent = "2 hari lagi sampai tujuan";
+            document.getElementById('resStatus').textContent = data.status || "Dalam Proses";
+            document.getElementById('resEstimasi').textContent = "Berdasarkan jarak";
+            document.getElementById('resSisaHari').textContent = "Dalam pengiriman kurir";
 
             // Sender/Receiver
             document.getElementById('resPengirim').innerHTML = `
-                <strong>${data.pengirim.nama}</strong><br>
-                ${data.pengirim.alamat}<br>
-                Telp: ${data.pengirim.telp}
+                <strong>Universitas Terbuka</strong><br>
+                Gedung Pusat Bahan Ajar<br>
+                Pondok Cabe, Tangerang Selatan
             `;
             document.getElementById('resPenerima').innerHTML = `
-                <strong>${data.penerima.nama}</strong><br>
-                ${data.penerima.alamat}<br>
-                Telp: ${data.penerima.telp}
+                <strong>${data.nama}</strong><br>
+                NIM: ${data.nim}<br>
+                (Alamat Sesuai Sistem)
             `;
 
             // Timeline & Progress
             const timelineContainer = document.getElementById('resTimeline');
             timelineContainer.innerHTML = '';
-            let completedCount = 0;
+            
+            if (data.perjalanan && Array.isArray(data.perjalanan)) {
+                data.perjalanan.forEach((item, index) => {
+                    const entry = document.createElement('div');
+                    entry.className = 'timeline-entry';
+                    
+                    let isLast = index === data.perjalanan.length - 1;
+                    let icon = isLast ? '●' : '✓';
+                    let codeClass = isLast ? 'proses' : 'selesai';
 
-            data.timeline.forEach(item => {
-                const entry = document.createElement('div');
-                entry.className = 'timeline-entry';
-                
-                let icon = '○';
-                if (item.code === 'selesai') { icon = '✓'; completedCount++; }
-                else if (item.code === 'proses') { icon = '●'; }
-
-                entry.innerHTML = `
-                    <div class="timeline-dot ${item.code}">${icon}</div>
-                    <div class="timeline-content">
-                        <div class="timeline-time">${item.waktu}</div>
-                        <div class="timeline-status">${item.status}</div>
-                        <div class="timeline-meta">
-                            Lokasi: ${item.lokasi} | Petugas: ${item.petugas}
+                    entry.innerHTML = `
+                        <div class="timeline-dot ${codeClass}">${icon}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-time">${item.waktu}</div>
+                            <div class="timeline-status">${item.keterangan}</div>
                         </div>
-                    </div>
-                `;
-                timelineContainer.appendChild(entry);
-            });
+                    `;
+                    timelineContainer.appendChild(entry);
+                });
 
-            // Auto-calculate progress bar
-            const progress = (completedCount / data.timeline.length) * 100;
-            setTimeout(() => {
-                document.getElementById('resProgress').style.width = progress + '%';
-            }, 100);
+                // Auto-calculate progress bar
+                const progress = (data.perjalanan.length / 5) * 100;
+                setTimeout(() => {
+                    document.getElementById('resProgress').style.width = Math.min(progress, 100) + '%';
+                }, 100);
+            } else {
+                document.getElementById('resProgress').style.width = '10%';
+            }
         }
     </script>
 </body>

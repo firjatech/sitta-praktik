@@ -31,10 +31,10 @@
                         <table id="rekapTable">
                             <thead>
                                 <tr>
-                                    <th>Kode Barang</th>
-                                    <th>Nama Barang</th>
-                                    <th>Jenis</th>
-                                    <th>Stok</th>
+                                    <th>Kode</th>
+                                    <th>Judul</th>
+                                    <th>Kategori</th>
+                                    <th>Qty</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -93,14 +93,14 @@
 
             // Render Rekap Table (Low Stock)
             const rekapTableBody = document.querySelector('#rekapTable tbody');
-            dataBahanAjar.sort((a, b) => a.stok - b.stok).forEach(item => {
+            dataBahanAjar.sort((a, b) => a.qty - b.qty).forEach(item => {
                 const row = document.createElement('tr');
-                const status = item.stok < 50 ? '<span class="status-restock">Restock</span>' : '<span class="status-aman">Aman</span>';
+                const status = item.qty < item.safety ? '<span class="status-restock">Restock</span>' : '<span class="status-aman">Aman</span>';
                 row.innerHTML = `
-                    <td>${item.kodeBarang}</td>
-                    <td>${item.namaBarang}</td>
-                    <td>${item.jenis}</td>
-                    <td>${item.stok}</td>
+                    <td>${item.kode}</td>
+                    <td>${item.judul}</td>
+                    <td>${item.kategori}</td>
+                    <td>${item.qty}</td>
                     <td>${status}</td>
                 `;
                 rekapTableBody.appendChild(row);

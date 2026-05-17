@@ -27,12 +27,12 @@
                     <table id="stokTable">
                         <thead>
                             <tr>
-                                <th>Kode Lokasi</th>
-                                <th>Kode Barang</th>
-                                <th>Nama Barang</th>
-                                <th>Jenis</th>
-                                <th>Edisi</th>
-                                <th>Stok</th>
+                                <th>Lokasi Rak</th>
+                                <th>Kode</th>
+                                <th>Judul</th>
+                                <th>Kategori</th>
+                                <th>UPBJJ</th>
+                                <th>Qty</th>
                                 <th class="table-actions-header">Aksi</th>
                             </tr>
                         </thead>
@@ -53,33 +53,42 @@
             <form id="addStokForm" class="form-section">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Kode Lokasi</label>
-                        <input type="text" id="kodeLokasi" class="form-control" required placeholder="OTMP01">
+                        <label>Lokasi Rak</label>
+                        <input type="text" id="kodeLokasi" class="form-control" required placeholder="R1-A3">
                     </div>
                     <div class="form-group">
-                        <label>Kode Barang</label>
-                        <input type="text" id="kodeBarang" class="form-control" required placeholder="ASIP1234">
+                        <label>Kode</label>
+                        <input type="text" id="kodeBarang" class="form-control" required placeholder="EKMA4116">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Nama Barang</label>
+                    <label>Judul</label>
                     <input type="text" id="namaBarang" class="form-control" required placeholder="Nama Buku">
                 </div>
                 <div class="form-group">
-                    <label for="jenisBarang">Jenis Barang</label>
-                    <select id="jenisBarang" class="form-control" required title="Pilih jenis barang">
-                        <option value="">-- Pilih Jenis --</option>
-                        <option value="BMP">BMP</option>
-                        <option value="Suplemen">Suplemen</option>
+                    <label for="jenisBarang">Kategori</label>
+                    <select id="jenisBarang" class="form-control" required title="Pilih kategori">
+                        <option value="">-- Pilih Kategori --</option>
+                        <option value="MK Wajib">MK Wajib</option>
+                        <option value="MK Pilihan">MK Pilihan</option>
+                        <option value="Praktikum">Praktikum</option>
+                        <option value="Problem-Based">Problem-Based</option>
                     </select>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Edisi</label>
-                        <input type="number" id="edisi" class="form-control" min="1" required placeholder="1">
+                        <label>UPBJJ</label>
+                        <select id="edisi" class="form-control" required title="Pilih UPBJJ">
+                            <option value="">-- Pilih UPBJJ --</option>
+                            <option value="Jakarta">Jakarta</option>
+                            <option value="Surabaya">Surabaya</option>
+                            <option value="Makassar">Makassar</option>
+                            <option value="Padang">Padang</option>
+                            <option value="Denpasar">Denpasar</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label>Stok</label>
+                        <label>Qty</label>
                         <input type="number" id="stok" class="form-control" min="0" required placeholder="0">
                     </div>
                 </div>
@@ -102,34 +111,43 @@
             <form id="editStokForm">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Kode Lokasi</label>
-                        <input type="text" id="editKodeLokasi" class="form-control" required title="Masukkan kode lokasi">
+                        <label>Lokasi Rak</label>
+                        <input type="text" id="editKodeLokasi" class="form-control" required title="Masukkan lokasi rak">
                     </div>
                     <div class="form-group">
-                        <label>Kode Barang</label>
+                        <label>Kode</label>
                         <input type="text" id="editKodeBarang" class="form-control" required title="Masukkan kode barang">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Nama Barang</label>
-                    <input type="text" id="editNamaBarang" class="form-control" required title="Masukkan nama barang">
+                    <label>Judul</label>
+                    <input type="text" id="editNamaBarang" class="form-control" required title="Masukkan judul barang">
                 </div>
                 <div class="form-group">
-                    <label for="editJenisBarang">Jenis Barang</label>
-                    <select id="editJenisBarang" class="form-control" required title="Pilih jenis barang">
-                        <option value="">-- Pilih Jenis --</option>
-                        <option value="BMP">BMP</option>
-                        <option value="Suplemen">Suplemen</option>
+                    <label for="editJenisBarang">Kategori</label>
+                    <select id="editJenisBarang" class="form-control" required title="Pilih kategori">
+                        <option value="">-- Pilih Kategori --</option>
+                        <option value="MK Wajib">MK Wajib</option>
+                        <option value="MK Pilihan">MK Pilihan</option>
+                        <option value="Praktikum">Praktikum</option>
+                        <option value="Problem-Based">Problem-Based</option>
                     </select>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Edisi</label>
-                        <input type="number" id="editEdisi" class="form-control" min="1" required title="Masukkan nomor edisi">
+                        <label>UPBJJ</label>
+                        <select id="editEdisi" class="form-control" required title="Pilih UPBJJ">
+                            <option value="">-- Pilih UPBJJ --</option>
+                            <option value="Jakarta">Jakarta</option>
+                            <option value="Surabaya">Surabaya</option>
+                            <option value="Makassar">Makassar</option>
+                            <option value="Padang">Padang</option>
+                            <option value="Denpasar">Denpasar</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label>Stok</label>
-                        <input type="number" id="editStok" class="form-control" min="0" required title="Masukkan jumlah stok">
+                        <label>Qty</label>
+                        <input type="number" id="editStok" class="form-control" min="0" required title="Masukkan jumlah qty">
                     </div>
                 </div>
                 <div class="form-actions">
@@ -170,12 +188,12 @@
             dataBahanAjar.forEach((item, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${item.kodeLokasi}</td>
-                    <td>${item.kodeBarang}</td>
-                    <td>${item.namaBarang}</td>
-                    <td><span class="status-badge">${item.jenis}</span></td>
-                    <td>${item.edisi}</td>
-                    <td><strong>${item.stok}</strong></td>
+                    <td>${item.lokasiRak}</td>
+                    <td>${item.kode}</td>
+                    <td>${item.judul}</td>
+                    <td><span class="status-badge">${item.kategori}</span></td>
+                    <td>${item.upbjj}</td>
+                    <td><strong>${item.qty}</strong></td>
                     <td class="table-actions">
                         <button class="btn btn-sm btn-light" onclick="showEditModal(${index})">Edit</button>
                         <button class="btn btn-sm btn-danger" onclick="showDeleteConfirmModal(${index})">Hapus</button>
@@ -220,12 +238,12 @@
                 imgPreview.style.display = 'none';
             }
 
-            document.getElementById('editKodeLokasi').value = item.kodeLokasi;
-            document.getElementById('editKodeBarang').value = item.kodeBarang;
-            document.getElementById('editNamaBarang').value = item.namaBarang;
-            document.getElementById('editJenisBarang').value = item.jenis;
-            document.getElementById('editEdisi').value = item.edisi;
-            document.getElementById('editStok').value = item.stok;
+            document.getElementById('editKodeLokasi').value = item.lokasiRak || '';
+            document.getElementById('editKodeBarang').value = item.kode || '';
+            document.getElementById('editNamaBarang').value = item.judul || '';
+            document.getElementById('editJenisBarang').value = item.kategori || '';
+            document.getElementById('editEdisi').value = item.upbjj || '';
+            document.getElementById('editStok').value = item.qty || 0;
             
             openModal('editStokModal');
         }
@@ -235,12 +253,13 @@
             
             if (selectedIndex !== null) {
                 dataBahanAjar[selectedIndex] = {
-                    kodeLokasi: document.getElementById('editKodeLokasi').value,
-                    kodeBarang: document.getElementById('editKodeBarang').value,
-                    namaBarang: document.getElementById('editNamaBarang').value,
-                    jenis: document.getElementById('editJenisBarang').value,
-                    edisi: parseInt(document.getElementById('editEdisi').value),
-                    stok: parseInt(document.getElementById('editStok').value)
+                    ...dataBahanAjar[selectedIndex],
+                    lokasiRak: document.getElementById('editKodeLokasi').value,
+                    kode: document.getElementById('editKodeBarang').value,
+                    judul: document.getElementById('editNamaBarang').value,
+                    kategori: document.getElementById('editJenisBarang').value,
+                    upbjj: document.getElementById('editEdisi').value,
+                    qty: parseInt(document.getElementById('editStok').value)
                 };
                 
                 renderTable();
@@ -254,12 +273,15 @@
             e.preventDefault();
             
             const newItem = {
-                kodeLokasi: document.getElementById('kodeLokasi').value,
-                kodeBarang: document.getElementById('kodeBarang').value,
-                namaBarang: document.getElementById('namaBarang').value,
-                jenis: document.getElementById('jenisBarang').value,
-                edisi: parseInt(document.getElementById('edisi').value),
-                stok: parseInt(document.getElementById('stok').value)
+                lokasiRak: document.getElementById('kodeLokasi').value,
+                kode: document.getElementById('kodeBarang').value,
+                judul: document.getElementById('namaBarang').value,
+                kategori: document.getElementById('jenisBarang').value,
+                upbjj: document.getElementById('edisi').value,
+                qty: parseInt(document.getElementById('stok').value),
+                harga: 0,
+                safety: 10,
+                catatanHTML: ""
             };
 
             dataBahanAjar.push(newItem);

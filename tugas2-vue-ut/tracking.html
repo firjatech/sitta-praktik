@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking DO - Universitas Terbuka</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header class="navbar">
+            <div class="logo-container">
+                <i class="fa-solid fa-truck-fast"></i>
+                <span>Tracking DO</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Beranda</a>
+                <a href="stok.html">Stok</a>
+                <a href="tracking.html" class="active">Tracking DO</a>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="page-header">
+                <h1>Tracking Delivery Order (DO)</h1>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+                <!-- Form Area -->
+                <section class="form-section">
+                    <h2 style="margin-bottom: 1.5rem; color: var(--ut-blue); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Buat DO Baru</h2>
+                    <form @submit.prevent="submitDO">
+                        <div class="form-group">
+                            <label>Nomor DO (Otomatis)</label>
+                            <input type="text" class="form-control" :value="nextDoId" disabled>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>NIM Mahasiswa</label>
+                                <input type="text" class="form-control" v-model="form.nim" required placeholder="Masukkan NIM">
+                            </div>
+                            <div class="form-group">
+                                <label>Nama Mahasiswa</label>
+                                <input type="text" class="form-control" v-model="form.nama" required placeholder="Masukkan Nama">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Ekspedisi</label>
+                            <select v-model="form.ekspedisi" class="form-control" required>
+                                <option value="" disabled>Pilih Ekspedisi</option>
+                                <option v-for="eks in pengirimanList" :key="eks" :value="eks">
+                                    {{ eks }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Paket Bahan Ajar</label>
+                            <select v-model="form.paketKode" class="form-control" required>
+                                <option value="" disabled>Pilih Paket Bahan Ajar</option>
+                                <option v-for="paket in paketList" :key="paket.kodePaket" :value="paket.kodePaket">
+                                    {{ paket.kodePaket }} - {{ paket.namaPaket }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Preview Daftar Mata Kuliah (diisi oleh watcher/computed) -->
+                        <div class="package-preview" v-if="previewIsiPaket.length > 0">
+                            <h4>Isi Paket:</h4>
+                            <ul>
+                                <li v-for="mk in previewIsiPaket" :key="mk">{{ mk }}</li>
+                            </ul>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label>Tanggal Kirim</label>
+                            <input type="date" class="form-control" v-model="form.tanggalKirim" required>
+                        </div>
+                        
+                        <div class="total-price">
+                            Total Harga: Rp {{ formatRupiah(totalHarga) }}
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                            <button type="submit" class="btn btn-primary" style="flex: 2; justify-content: center;">
+                                <i class="fa-solid fa-paper-plane"></i> Simpan DO
+                            </button>
+                            <button type="button" class="btn btn-secondary" @click="resetForm" style="flex: 1; justify-content: center;">
+                                <i class="fa-solid fa-rotate-right"></i> Reset
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- History Area -->
+                <section>
+                    <h2 style="margin-bottom: 1rem; color: var(--ut-blue);">Riwayat Delivery Order</h2>
+                    <div v-if="doList.length === 0" style="padding: 2rem; background: var(--white); border-radius: 8px; text-align: center; color: #777;">
+                        <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; color: #ccc;"></i>
+                        <p>Belum ada riwayat Delivery Order.</p>
+                    </div>
+
+                    <div class="tracking-cards">
+                        <div class="tracking-card" v-for="(item, index) in doList" :key="item.noDo">
+                            <button class="delete-do" @click="deleteDO(index)" title="Hapus DO">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            <div class="header">
+                                <h3>{{ item.noDo }}</h3>
+                                <span class="date">{{ formatDate(item.tanggalKirim) }}</span>
+                            </div>
+                            <div class="tracking-details">
+                                <p><strong>NIM:</strong> {{ item.nim }}</p>
+                                <p><strong>Nama:</strong> {{ item.nama }}</p>
+                                <p><strong>Paket:</strong> {{ item.namaPaket }}</p>
+                                <p><strong>Ekspedisi:</strong> {{ item.ekspedisi }}</p>
+                            </div>
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                <span class="status-badge status-aman"><i class="fa-solid fa-box"></i> Sedang Diproses</span>
+                                <strong style="color: var(--ut-blue);">Rp {{ formatRupiah(item.totalHarga) }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script Data Mentah -->
+    <script src="js/dataBahanAjar.js"></script>
+    <!-- Vue Instance -->
+    <script src="js/tracking-app.js"></script>
+</body>
+</html>
