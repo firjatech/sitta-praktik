@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SITTA - Tracking Pengiriman</title>
     <link rel="stylesheet" href="css/style.css?v=3">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         .tracking-header {
             text-align: left;
@@ -37,7 +42,6 @@
         }
 
         .result-container {
-            display: none;
             animation: fadeIn 0.6s ease-out;
         }
 
@@ -140,9 +144,22 @@
             font-size: 0.75rem;
         }
 
-        .timeline-dot.selesai { border-color: #10B981; background: #10B981; color: white; }
-        .timeline-dot.proses { border-color: #3B82F6; background: #3B82F6; color: white; }
-        .timeline-dot.belum { border-color: #9CA3AF; background: var(--white); }
+        .timeline-dot.selesai {
+            border-color: #10B981;
+            background: #10B981;
+            color: white;
+        }
+
+        .timeline-dot.proses {
+            border-color: #3B82F6;
+            background: #3B82F6;
+            color: white;
+        }
+
+        .timeline-dot.belum {
+            border-color: #9CA3AF;
+            background: var(--white);
+        }
 
         .timeline-content {
             background: var(--white);
@@ -158,12 +175,6 @@
             font-weight: 700;
             color: var(--gray-800);
             font-size: 1rem;
-        }
-
-        .timeline-meta {
-            font-size: 0.85rem;
-            color: var(--gray-600);
-            margin-top: 0.25rem;
         }
 
         .bonus-actions {
@@ -184,235 +195,470 @@
             border: 1px solid var(--gray-200);
         }
 
+        @media (max-width: 992px) {
+            .app-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
         @media (max-width: 768px) {
-            .info-grid, .address-grid {
+
+            .info-grid,
+            .address-grid {
                 grid-template-columns: 1fr;
             }
         }
+
+        .form-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .package-preview {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .package-preview ul {
+            margin-top: 0.5rem;
+            padding-left: 1.5rem;
+        }
+
+        .total-price {
+            margin-top: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--ut-blue);
+            background: #EFF6FF;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
     </style>
 </head>
+
 <body>
 
-    <nav class="navbar"></nav>
+    <div id="app">
+        <nav class="navbar"></nav>
 
-    <div class="dashboard-layout">
-        <main style="flex: 1; padding: 2rem; overflow-y: auto;">
-            <header class="tracking-header">
-                <h1>📦 Tracking Pengiriman Bahan Ajar</h1>
-                <p style="color: var(--gray-600);">Lacak status pengiriman bahan ajar Anda secara real-time.</p>
-            </header>
+        <div class="dashboard-layout">
+            <main style="flex: 1; padding: 2rem; overflow-y: auto;">
+                <header class="tracking-header">
+                    <h1>Tracking & Pantau Pengiriman Bahan Ajar</h1>
+                    <p style="color: var(--gray-600);">Buat Delivery Order (DO) baru dan lacak status setiap kiriman bahan ajar.</p>
+                </header>
 
-            <section class="card search-card">
-                <label class="search-label" for="trackingInput">Nomor Delivery Order (DO) / Resi</label>
-                <input type="text" id="trackingInput" class="form-control" placeholder="Masukkan nomor DO, contoh: DO/UT/001" style="font-size: 1.1rem; padding: 1rem;">
-                <div class="search-actions">
-                    <button class="btn btn-primary" id="btnSearch" style="padding: 0.85rem 2.5rem;">🔍 Cari</button>
-                    <button class="btn" id="btnReset" style="background: var(--gray-100); color: var(--gray-800);">↺ Reset</button>
+                <div class="app-grid"
+                    style="display: flex; flex-direction: column; gap: 2rem; align-items: stretch;">
+
+                    <!-- KIRI: Form Buat DO Baru -->
+                    <section class="form-section" style="margin-top: 0;">
+                        <h2
+                            style="margin-top: 0; margin-bottom: 1.5rem; color: var(--ut-blue); border-bottom: 2px solid var(--gray-200); padding-bottom: 0.5rem;">
+                            Buat DO Baru</h2>
+                        <form @submit.prevent="submitDO">
+                            <div class="form-group">
+                                <label>Nomor DO</label>
+                                <input type="text" class="form-control" v-model="form.noDo" required placeholder="Contoh: DO2025-0004">
+                            </div>
+                            <div class="form-group">
+                                <label>NIM Mahasiswa</label>
+                                <input type="text" class="form-control" v-model="form.nim" required
+                                    placeholder="Masukkan NIM">
+                            </div>
+                            <div class="form-group">
+                                <label>Nama Mahasiswa</label>
+                                <input type="text" class="form-control" v-model="form.nama" required
+                                    placeholder="Masukkan Nama">
+                            </div>
+                            <div class="form-group">
+                                <label>UPBJJ Tujuan</label>
+                                <select v-model="form.upbjj" class="form-control" required>
+                                    <option value="" disabled>Pilih UPBJJ</option>
+                                    <option v-for="upbjj in upbjjList" :key="upbjj" :value="upbjj">
+                                        {{ upbjj }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Ekspedisi</label>
+                                <select v-model="form.ekspedisi" class="form-control" required>
+                                    <option value="" disabled>Pilih Ekspedisi</option>
+                                    <option v-for="eks in pengirimanList" :key="eks" :value="eks">
+                                        {{ eks }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Paket Bahan Ajar (Pilih Mata Kuliah)</label>
+                                <p style="font-size: 0.8rem; color: var(--gray-600); margin-top: -0.5rem; margin-bottom: 0.5rem;">Tahan tombol Ctrl (Windows) / Cmd (Mac) untuk memilih lebih dari 1</p>
+                                <select v-model="form.paketKode" class="form-control" required multiple style="height: auto; min-height: 120px;">
+                                    <option v-for="mk in bahanAjarList" :key="mk.kode" :value="mk.kode">
+                                        {{ mk.kode }} - {{ mk.judul }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Preview Daftar Mata Kuliah -->
+                            <div class="package-preview" v-if="previewIsiPaket.length > 0">
+                                <h4 style="color: var(--gray-800); margin-bottom: 0.5rem;">Detail Bahan Ajar:</h4>
+                                <ul>
+                                    <li v-for="mk in previewIsiPaket" :key="mk">{{ mk }}</li>
+                                </ul>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label>Tanggal Kirim</label>
+                                <input type="date" class="form-control" v-model="form.tanggalKirim" required>
+                            </div>
+
+                            <div class="total-price">
+                                Total: {{ formatRupiah(totalHarga) }}
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                    <i class="fa-solid fa-paper-plane"></i> Simpan
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- KANAN: Tracking Area -->
+                    <section>
+                        <div class="card search-card" style="margin-top: 0;">
+                            <label class="search-label" for="trackingInput">Lacak Nomor Delivery Order (DO) /
+                                Resi</label>
+                            <input type="text" id="trackingInput" v-model="searchQuery" class="form-control"
+                                @keyup.enter="searchTracking" placeholder="Masukkan nomor DO, contoh: DO2025-0001"
+                                style="font-size: 1.1rem; padding: 1rem;">
+                            <div class="search-actions">
+                                <button class="btn btn-primary" @click="searchTracking"
+                                    style="padding: 0.85rem 2.5rem;">🔍 Cari</button>
+                            </div>
+                        </div>
+
+                        <!-- Loading Indicator -->
+                        <div v-if="isSearching" style="text-align: center; margin: 3rem 0;">
+                            <div class="spinner"
+                                style="border: 4px solid rgba(0, 0, 0, 0.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--ut-blue); animation: spin 1s linear infinite; margin: 0 auto;">
+                            </div>
+                            <p style="margin-top: 1rem; color: var(--gray-600);">Sedang mencari data pengiriman...</p>
+                        </div>
+                        <style>
+                            @keyframes spin {
+                                0% {
+                                    transform: rotate(0deg);
+                                }
+
+                                100% {
+                                    transform: rotate(360deg);
+                                }
+                            }
+                        </style>
+
+                        <!-- Error Message -->
+                        <div v-if="showError && !isSearching"
+                            style="text-align: center; padding: 3rem 0; background: var(--white); border-radius: 16px; border: 1px solid var(--danger);">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+                            <h2 style="color: var(--danger); margin-bottom: 1rem;">Data tidak ditemukan.</h2>
+                            <p style="color: var(--gray-600);">Nomor Delivery Order <strong>{{ searchQuery }}</strong>
+                                tidak terdaftar di sistem.</p>
+                        </div>
+
+                        <!-- Result Area -->
+                        <div v-if="searchResult && !isSearching" class="result-container">
+                            <div class="info-grid">
+                                <div class="summary-card">
+                                    <h3
+                                        style="margin-bottom: 1.5rem; font-size: 0.9rem; text-transform: uppercase; color: var(--gray-600);">
+                                        Detail Pengiriman</h3>
+                                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Nomor DO</span>
+                                            <strong>{{ searchResult.noDo }}</strong>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Layanan</span>
+                                            <strong>{{ searchResult.paket || '-' }}</strong>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Tanggal Kirim</span>
+                                            <strong>{{ searchResult.tanggalKirim || '-' }}</strong>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Ekspedisi</span>
+                                            <strong>{{ searchResult.ekspedisi || '-' }}</strong>
+                                        </div>
+                                        <div
+                                            style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 1px dashed var(--gray-200);">
+                                            <span>Total Bayar</span>
+                                            <strong style="color: var(--ut-blue); font-size: 1.1rem;">{{
+                                                formatRupiah(searchResult.total || 0) }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="summary-card">
+                                    <h3
+                                        style="margin-bottom: 1.5rem; font-size: 0.9rem; text-transform: uppercase; color: var(--gray-600);">
+                                        Status Pengiriman</h3>
+                                    <div class="status-badge-tracking">
+                                        🚚 <span>{{ searchResult.status || 'Dalam Proses' }}</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" id="resProgress"></div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Estimasi Tiba</span>
+                                            <strong>Berdasarkan jarak</strong>
+                                        </div>
+                                        <p style="font-size: 0.875rem; color: var(--ut-blue); font-weight: 500;">Dalam
+                                            pengiriman kurir</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="padding: 0;">
+                                <div class="address-grid">
+                                    <div class="address-box">
+                                        <h3>📤 PENGIRIM (DARI)</h3>
+                                        <div style="line-height: 1.8;">
+                                            <strong>Universitas Terbuka</strong><br>
+                                            Gedung Pusat Bahan Ajar<br>
+                                            Pondok Cabe, Tangerang Selatan
+                                        </div>
+                                    </div>
+                                    <div class="address-box">
+                                        <h3>📥 PENERIMA (KEPADA)</h3>
+                                        <div style="line-height: 1.8;">
+                                            <strong>{{ searchResult.nama }}</strong><br>
+                                            NIM: {{ searchResult.nim }}<br>
+                                            (Alamat Sesuai Sistem)
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="padding: 2rem;">
+                                    <h3 style="margin-bottom: 2rem;">📋 TIMELINE PERJALANAN PAKET</h3>
+                                    <div class="timeline-vertical">
+                                        <div v-for="(item, index) in searchResult.perjalanan" :key="index"
+                                            class="timeline-entry">
+                                            <div class="timeline-dot"
+                                                :class="index === searchResult.perjalanan.length - 1 ? 'proses' : 'selesai'">
+                                                {{ index === searchResult.perjalanan.length - 1 ? '●' : '✓' }}
+                                            </div>
+                                            <div class="timeline-content">
+                                                <div class="timeline-time">{{ item.waktu }}</div>
+                                                <div class="timeline-status">{{ item.keterangan }}</div>
+                                            </div>
+                                        </div>
+                                        <!-- If empty timeline -->
+                                        <div v-if="!searchResult.perjalanan || searchResult.perjalanan.length === 0"
+                                            style="color: var(--gray-600); padding-left: 2rem;">
+                                            Belum ada pembaruan status.
+                                        </div>
+                                    </div>
+                                    <!-- Peta dan Tombol Aksi telah dihapus sesuai permintaan -->
+                        </div>
+                    </section>
                 </div>
-            </section>
-
-            <div id="loading" style="display: none; text-align: center; margin: 3rem 0;">
-                <div class="spinner"></div>
-                <p style="margin-top: 1rem; color: var(--gray-600);">Sedang mencari data pengiriman...</p>
-            </div>
-
-            <div id="resultArea" class="result-container">
-                <div class="info-grid">
-                    <div class="summary-card">
-                        <h3 style="margin-bottom: 1.5rem; font-size: 0.9rem; text-transform: uppercase; color: var(--gray-600);">Detail Pengiriman</h3>
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Nomor DO</span>
-                                <strong id="resDO"></strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Layanan</span>
-                                <strong id="resLayanan"></strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Tanggal Kirim</span>
-                                <strong id="resTglKirim"></strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Ekspedisi</span>
-                                <strong id="resEkspedisi"></strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 1px dashed var(--gray-200);">
-                                <span>Total Bayar</span>
-                                <strong id="resTotal" style="color: var(--ut-blue); font-size: 1.1rem;"></strong>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="summary-card">
-                        <h3 style="margin-bottom: 1.5rem; font-size: 0.9rem; text-transform: uppercase; color: var(--gray-600);">Status Pengiriman</h3>
-                        <div class="status-badge-tracking" id="resStatusBadge">
-                            🚚 <span id="resStatus"></span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" id="resProgress"></div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Estimasi Tiba</span>
-                                <strong id="resEstimasi"></strong>
-                            </div>
-                            <p id="resSisaHari" style="font-size: 0.875rem; color: var(--ut-blue); font-weight: 500;"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card" style="padding: 0;">
-                    <div class="address-grid">
-                        <div class="address-box">
-                            <h3>📤 PENGIRIM (DARI)</h3>
-                            <div id="resPengirim" style="line-height: 1.8;"></div>
-                        </div>
-                        <div class="address-box">
-                            <h3>📥 PENERIMA (KEPADA)</h3>
-                            <div id="resPenerima" style="line-height: 1.8;"></div>
-                        </div>
-                    </div>
-
-                    <div style="padding: 2rem;">
-                        <h3 style="margin-bottom: 2rem;">📋 TIMELINE PERJALANAN PAKET</h3>
-                        <div class="timeline-vertical" id="resTimeline">
-                            <!-- Timeline injected via JS -->
-                        </div>
-
-                        <div class="map-dummy">
-                            <div style="background: white; padding: 1rem 2rem; border-radius: 50px; box-shadow: var(--shadow-md); font-weight: 600; color: var(--ut-blue);">
-                                📍 Peta Rute Pengiriman (Simulasi)
-                            </div>
-                        </div>
-
-                        <div class="bonus-actions">
-                            <button class="btn btn-primary" onclick="copyDO()" style="background: var(--gray-800);">📋 Copy Nomor DO</button>
-                            <button class="btn btn-primary" onclick="alert('Link tracking berhasil disalin ke clipboard!')" style="background: var(--ut-blue-light);">📤 Bagikan Tracking</button>
-                            <button class="btn btn-primary" onclick="alert('Sedang menyiapkan file PDF...')" style="background: #E11D48;">📄 Download PDF</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Custom Error Modal -->
-    <div id="errorModal" class="modal-overlay">
-        <div class="modal-content" style="text-align: center;">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
-            <h2 style="color: var(--danger); margin-bottom: 1rem;">Maaf, data tidak ditemukan.</h2>
-            <p style="color: var(--gray-600); line-height: 1.6; margin-bottom: 2rem;">
-                Nomor Delivery Order yang Anda masukkan tidak terdaftar di sistem kami. <br>
-                <strong>Pastikan nomor DO yang Anda masukkan sudah benar.</strong><br><br>
-                Hubungi customer service UT di (021) 123456 untuk bantuan lebih lanjut.
-            </p>
-            <button class="btn btn-primary" onclick="closeModal('errorModal')" style="width: 100%;">Tutup</button>
+            </main>
         </div>
     </div>
 
+    <!-- Script Utama (data.js and script.js) -->
     <script src="js/data.js?v=3"></script>
     <script src="js/script.js?v=3"></script>
+
+    <!-- Vue App Implementation -->
     <script>
-        const btnSearch = document.getElementById('btnSearch');
-        const btnReset = document.getElementById('btnReset');
-        const input = document.getElementById('trackingInput');
-        const resultArea = document.getElementById('resultArea');
-        const loading = document.getElementById('loading');
+        const { createApp } = Vue;
 
-        function formatRupiah(number) {
-            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-        }
+        createApp({
+            data() {
+                return {
+                    // Global Data dari data.js
+                    paketList: typeof paketList !== 'undefined' ? paketList : [],
+                    bahanAjarList: typeof dataBahanAjar !== 'undefined' ? dataBahanAjar : [],
+                    pengirimanList: typeof pengirimanList !== 'undefined' ? pengirimanList : [],
+                    upbjjList: typeof upbjjList !== 'undefined' ? upbjjList : [],
 
-        function copyDO() {
-            const doText = document.getElementById('resDO').textContent;
-            navigator.clipboard.writeText(doText);
-            alert('Nomor DO berhasil disalin: ' + doText);
-        }
+                    // State DO Form
+                    form: {
+                        noDo: '',
+                        nim: '',
+                        nama: '',
+                        upbjj: '',
+                        ekspedisi: '',
+                        paketKode: [],
+                        tanggalKirim: new Date().toISOString().split('T')[0]
+                    },
+                    previewIsiPaket: [],
+                    doList: [],
 
-        btnSearch.addEventListener('click', () => {
-            const val = input.value.trim();
-            if (!val) {
-                alert('Masukkan nomor DO terlebih dahulu.');
-                return;
-            }
-
-            loading.style.display = 'block';
-            resultArea.style.display = 'none';
-
-            // Simulate server lag
-            setTimeout(() => {
-                loading.style.display = 'none';
-                const data = dataTracking[val];
-
-                if (data) {
-                    renderResult(val, data);
-                    resultArea.style.display = 'block';
-                } else {
-                    openModal('errorModal');
+                    // State Tracking Search
+                    searchQuery: '',
+                    isSearching: false,
+                    searchResult: null,
+                    showError: false
                 }
-            }, 800);
-        });
+            },
+            computed: {
+                totalHarga() {
+                    return this.form.paketKode.reduce((total, kode) => {
+                        const mk = this.bahanAjarList.find(p => p.kode === kode);
+                        return total + (mk ? mk.harga : 0);
+                    }, 0);
+                }
+            },
+            watch: {
+                // Pantau pilihan paket untuk merender isi paket
+                'form.paketKode'(newVal) {
+                    if (newVal && newVal.length > 0) {
+                        this.previewIsiPaket = newVal.map(kode => {
+                            const mk = this.bahanAjarList.find(b => b.kode === kode);
+                            return mk ? `${mk.kode} - ${mk.judul} (Rp ${this.formatRupiah(mk.harga)})` : kode;
+                        });
+                    } else {
+                        this.previewIsiPaket = [];
+                    }
+                },
+                // Simpan doList ke localStorage setiap ada perubahan
+                doList: {
+                    handler(newVal) {
+                        localStorage.setItem('sitta_ut_do_list_main', JSON.stringify(newVal));
+                    },
+                    deep: true
+                }
+            },
+            mounted() {
+                // Inisialisasi navbar (dari script.js) tidak perlu karena sudah jalan dari file script.js, 
+                // tapi karena ini di dalam div#app, script.js yang run DOMContentLoaded mungkin belum nge-hook properly?
+                // script.js menggunakan selector document.querySelector('nav'). Ini sudah ada.
 
-        btnReset.addEventListener('click', () => {
-            input.value = '';
-            resultArea.style.display = 'none';
-        });
+                const savedData = localStorage.getItem('sitta_ut_do_list_main');
+                if (savedData) {
+                    try {
+                        this.doList = JSON.parse(savedData);
+                    } catch (e) {
+                        console.error(e);
+                        this.doList = [];
+                    }
+                } else {
+                    // Seed initial data if empty so DO number isn't DO2025-001 if data.js already has dataTracking
+                    // For safety, we just start at 1 if localstorage is empty.
+                    this.doList = [];
+                }
+            },
+            methods: {
+                formatRupiah(number) {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+                },
+                submitDO() {
+                    const selectedMKs = this.form.paketKode.map(kode => {
+                        const mk = this.bahanAjarList.find(p => p.kode === kode);
+                        return mk ? mk.judul : kode;
+                    });
 
-        function renderResult(noDO, data) {
-            document.getElementById('resDO').textContent = noDO;
-            document.getElementById('resLayanan').textContent = data.paket || "-";
-            document.getElementById('resTglKirim').textContent = data.tanggalKirim || "-";
-            document.getElementById('resEkspedisi').textContent = data.ekspedisi || "-";
-            document.getElementById('resTotal').textContent = formatRupiah(data.total || 0);
-            
-            document.getElementById('resStatus').textContent = data.status || "Dalam Proses";
-            document.getElementById('resEstimasi').textContent = "Berdasarkan jarak";
-            document.getElementById('resSisaHari').textContent = "Dalam pengiriman kurir";
+                    const newDO = {
+                        noDo: this.form.noDo,
+                        nim: this.form.nim,
+                        nama: this.form.nama,
+                        upbjj: this.form.upbjj,
+                        ekspedisi: this.form.ekspedisi,
+                        paketKode: this.form.paketKode.join(', '),
+                        paketNama: selectedMKs.length > 0 ? selectedMKs.join(', ') : '-',
+                        tanggalKirim: this.form.tanggalKirim,
+                        totalHarga: this.totalHarga,
+                        perjalanan: [
+                            { waktu: this.form.tanggalKirim + " 08:00:00", keterangan: "DO Dibuat, Menunggu Penjemputan Kurir" }
+                        ],
+                        status: "Pending"
+                    };
 
-            // Sender/Receiver
-            document.getElementById('resPengirim').innerHTML = `
-                <strong>Universitas Terbuka</strong><br>
-                Gedung Pusat Bahan Ajar<br>
-                Pondok Cabe, Tangerang Selatan
-            `;
-            document.getElementById('resPenerima').innerHTML = `
-                <strong>${data.nama}</strong><br>
-                NIM: ${data.nim}<br>
-                (Alamat Sesuai Sistem)
-            `;
+                    this.doList.push(newDO);
+                    alert(`Berhasil membuat Delivery Order dengan nomor: ${newDO.noDo}`);
+                    this.resetForm();
+                },
+                resetForm() {
+                    this.form.noDo = '';
+                    this.form.nim = '';
+                    this.form.nama = '';
+                    this.form.upbjj = '';
+                    this.form.ekspedisi = '';
+                    this.form.paketKode = [];
+                    this.previewIsiPaket = [];
+                },
+                searchTracking() {
+                    const q = this.searchQuery.trim();
+                    if (!q) {
+                        alert('Masukkan nomor DO terlebih dahulu.');
+                        return;
+                    }
 
-            // Timeline & Progress
-            const timelineContainer = document.getElementById('resTimeline');
-            timelineContainer.innerHTML = '';
-            
-            if (data.perjalanan && Array.isArray(data.perjalanan)) {
-                data.perjalanan.forEach((item, index) => {
-                    const entry = document.createElement('div');
-                    entry.className = 'timeline-entry';
-                    
-                    let isLast = index === data.perjalanan.length - 1;
-                    let icon = isLast ? '●' : '✓';
-                    let codeClass = isLast ? 'proses' : 'selesai';
+                    this.isSearching = true;
+                    this.searchResult = null;
+                    this.showError = false;
 
-                    entry.innerHTML = `
-                        <div class="timeline-dot ${codeClass}">${icon}</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">${item.waktu}</div>
-                            <div class="timeline-status">${item.keterangan}</div>
-                        </div>
-                    `;
-                    timelineContainer.appendChild(entry);
-                });
+                    // Simulasi loading
+                    setTimeout(() => {
+                        this.isSearching = false;
 
-                // Auto-calculate progress bar
-                const progress = (data.perjalanan.length / 5) * 100;
-                setTimeout(() => {
-                    document.getElementById('resProgress').style.width = Math.min(progress, 100) + '%';
-                }, 100);
-            } else {
-                document.getElementById('resProgress').style.width = '10%';
+                        // Cari di data.js terlebih dahulu
+                        const globalDataTracking = typeof dataTracking !== 'undefined' ? dataTracking : null;
+                        let data = globalDataTracking && globalDataTracking[q] ? globalDataTracking[q] : null;
+
+                        // Jika tidak ada di data.js, cari di local doList
+                        if (!data) {
+                            const found = this.doList.find(d => d.noDo === q);
+                            if (found) {
+                                data = {
+                                    nim: found.nim,
+                                    nama: found.nama,
+                                    status: found.status,
+                                    ekspedisi: found.ekspedisi,
+                                    tanggalKirim: found.tanggalKirim,
+                                    paket: found.paketNama,
+                                    total: found.totalHarga,
+                                    perjalanan: found.perjalanan
+                                };
+                            }
+                        }
+
+                        if (data) {
+                            this.searchResult = {
+                                noDo: q,
+                                ...data
+                            };
+
+                            // Animasi progress bar
+                            this.$nextTick(() => {
+                                const progressLength = data.perjalanan ? data.perjalanan.length : 1;
+                                const progress = (progressLength / 5) * 100;
+                                const bar = document.getElementById('resProgress');
+                                if (bar) bar.style.width = Math.min(progress, 100) + '%';
+                            });
+                        } else {
+                            this.showError = true;
+                        }
+                    }, 800);
+                },
+                resetSearch() {
+                    this.searchQuery = '';
+                    this.searchResult = null;
+                    this.showError = false;
+                }
             }
-        }
+        }).mount('#app');
     </script>
 </body>
+
 </html>

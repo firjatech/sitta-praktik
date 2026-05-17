@@ -27,12 +27,15 @@
                     <table id="stokTable">
                         <thead>
                             <tr>
-                                <th>Lokasi Rak</th>
                                 <th>Kode</th>
                                 <th>Judul</th>
                                 <th>Kategori</th>
                                 <th>UPBJJ</th>
+                                <th>Lokasi Rak</th>
                                 <th>Qty</th>
+                                <th>Safety</th>
+                                <th>Status</th>
+                                <th>Catatan</th>
                                 <th class="table-actions-header">Aksi</th>
                             </tr>
                         </thead>
@@ -88,11 +91,25 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Harga (Rp)</label>
+                        <input type="number" id="hargaBahan" class="form-control" min="0" required placeholder="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label>Qty</label>
                         <input type="number" id="stok" class="form-control" min="0" required placeholder="0">
                     </div>
+                    <div class="form-group">
+                        <label>Safety</label>
+                        <input type="number" id="safetyStok" class="form-control" min="0" required placeholder="10">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary form-submit">Simpan Data</button>
+                <div class="form-group">
+                    <label>Catatan</label>
+                    <input type="text" id="catatanHTML" class="form-control" placeholder="Opsional (HTML diperbolehkan)">
+                </div>
+                <button type="submit" class="btn btn-primary form-submit" style="width: 100%;">Simpan Data</button>
             </form>
         </div>
     </div>
@@ -146,13 +163,27 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Harga (Rp)</label>
+                        <input type="number" id="editHargaBahan" class="form-control" min="0" required title="Masukkan harga">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label>Qty</label>
                         <input type="number" id="editStok" class="form-control" min="0" required title="Masukkan jumlah qty">
                     </div>
+                    <div class="form-group">
+                        <label>Safety</label>
+                        <input type="number" id="editSafetyStok" class="form-control" min="0" required title="Masukkan safety stock">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Catatan</label>
+                    <input type="text" id="editCatatanHTML" class="form-control" title="Masukkan catatan">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('editStokModal')">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-submit-primary">Simpan Perubahan</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editStokModal')" style="flex: 1;">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-submit-primary" style="flex: 2;">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
@@ -182,18 +213,31 @@
         let deleteIndex = null;
 
         function renderTable() {
+            localStorage.setItem('sitta_dataBahanAjar', JSON.stringify(dataBahanAjar));
             const tbody = document.querySelector('#stokTable tbody');
             tbody.innerHTML = '';
             
             dataBahanAjar.forEach((item, index) => {
+                let statusText;
+                if (item.qty === 0) {
+                    statusText = '<span style="color: var(--danger); font-weight: 600;">&#10006; Kosong</span>';
+                } else if (item.qty < item.safety) {
+                    statusText = '<span style="color: var(--warning); font-weight: 600;">&#9888; Menipis</span>';
+                } else {
+                    statusText = '<span style="color: var(--success); font-weight: 600;">&#10004; Aman</span>';
+                }
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${item.lokasiRak}</td>
                     <td>${item.kode}</td>
                     <td>${item.judul}</td>
                     <td><span class="status-badge">${item.kategori}</span></td>
                     <td>${item.upbjj}</td>
+                    <td>${item.lokasiRak}</td>
                     <td><strong>${item.qty}</strong></td>
+                    <td>${item.safety}</td>
+                    <td>${statusText}</td>
+                    <td>${item.catatanHTML || '-'}</td>
                     <td class="table-actions">
                         <button class="btn btn-sm btn-light" onclick="showEditModal(${index})">Edit</button>
                         <button class="btn btn-sm btn-danger" onclick="showDeleteConfirmModal(${index})">Hapus</button>
@@ -243,7 +287,10 @@
             document.getElementById('editNamaBarang').value = item.judul || '';
             document.getElementById('editJenisBarang').value = item.kategori || '';
             document.getElementById('editEdisi').value = item.upbjj || '';
+            document.getElementById('editHargaBahan').value = item.harga || 0;
             document.getElementById('editStok').value = item.qty || 0;
+            document.getElementById('editSafetyStok').value = item.safety || 0;
+            document.getElementById('editCatatanHTML').value = item.catatanHTML || '';
             
             openModal('editStokModal');
         }
@@ -259,7 +306,10 @@
                     judul: document.getElementById('editNamaBarang').value,
                     kategori: document.getElementById('editJenisBarang').value,
                     upbjj: document.getElementById('editEdisi').value,
-                    qty: parseInt(document.getElementById('editStok').value)
+                    harga: parseInt(document.getElementById('editHargaBahan').value) || 0,
+                    qty: parseInt(document.getElementById('editStok').value),
+                    safety: parseInt(document.getElementById('editSafetyStok').value) || 0,
+                    catatanHTML: document.getElementById('editCatatanHTML').value
                 };
                 
                 renderTable();
@@ -278,10 +328,10 @@
                 judul: document.getElementById('namaBarang').value,
                 kategori: document.getElementById('jenisBarang').value,
                 upbjj: document.getElementById('edisi').value,
+                harga: parseInt(document.getElementById('hargaBahan').value) || 0,
                 qty: parseInt(document.getElementById('stok').value),
-                harga: 0,
-                safety: 10,
-                catatanHTML: ""
+                safety: parseInt(document.getElementById('safetyStok').value) || 0,
+                catatanHTML: document.getElementById('catatanHTML').value
             };
 
             dataBahanAjar.push(newItem);

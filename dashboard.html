@@ -5,6 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SITTA - Dashboard</title>
     <link rel="stylesheet" href="css/style.css?v=3">
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .filter-panel {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        .filter-group select, .filter-group input[type="text"] {
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -14,7 +44,7 @@
         <main>
             <header class="dashboard-header">
                 <h1 id="greetingText">Selamat Datang</h1>
-                <p>Berikut adalah ringkasan informasi operasional bahan ajar hari ini.</p>
+                <p>Ringkasan informasi operasional bahan ajar hari ini.</p>
             </header>
 
             <section class="monitoring-section">
@@ -25,25 +55,95 @@
             </section>
 
             <div class="sections-grid">
-                <section class="rekap-section card">
-                    <h2>Rekap Bahan Ajar</h2>
-                    <div class="table-container">
-                        <table id="rekapTable">
-                            <thead>
-                                <tr>
-                                    <th>Kode</th>
-                                    <th>Judul</th>
-                                    <th>Kategori</th>
-                                    <th>Qty</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Table content via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                <div id="vue-rekap-app">
+                    <section class="rekap-section card">
+                        <h2>Rekap Bahan Ajar</h2>
+                        
+                        <!-- Panel Filter & Sort -->
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label>UT-Daerah</label>
+                                <select v-model="filter.upbjj">
+                                    <option value="">Semua Daerah</option>
+                                    <option v-for="daerah in upbjjList" :key="daerah" :value="daerah">{{ daerah }}</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Dependent Option: Hanya muncul jika UT-Daerah dipilih -->
+                            <div class="filter-group" v-if="filter.upbjj">
+                                <label>Kategori Mata Kuliah</label>
+                                <select v-model="filter.kategori">
+                                    <option value="">Semua Kategori</option>
+                                    <option v-for="kat in kategoriList" :key="kat" :value="kat">{{ kat }}</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label>Urutkan Berdasarkan (Sort)</label>
+                                <select v-model="sort.by">
+                                    <option value="qty">Stok</option>
+                                    <option value="judul">Judul (A-Z)</option>
+                                    <option value="harga">Harga</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Arah Sortir</label>
+                                <select v-model="sort.order">
+                                    <option value="asc">Terkecil - Terbesar / A-Z</option>
+                                    <option value="desc">Terbesar - Terkecil / Z-A</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group" style="flex-direction: row; align-items: center; padding-top: 1.2rem;">
+                                <input type="checkbox" id="warningCheck" v-model="filter.showWarningOnly">
+                                <label for="warningCheck" style="margin-left: 0.5rem; cursor: pointer; color: var(--danger);">Hanya Stok Menipis/Kosong</label>
+                            </div>
+
+                            <div class="filter-group" style="padding-top: 1.2rem; margin-left: auto;">
+                                <button class="btn" @click="resetFilter" style="background: var(--gray-200); padding: 0.5rem 1rem;">Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="rekapTable">
+                                <thead>
+                                    <tr>
+                                        <th>Kode</th>
+                                        <th>Judul</th>
+                                        <th>UT-Daerah</th>
+                                        <th>Kategori</th>
+                                        <th>Rak</th>
+                                        <th>Harga</th>
+                                        <th>Qty</th>
+                                        <th>safety</th>
+                                        <th>Status</th>
+                                        <th>Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in filteredAndSorted" :key="item.kode">
+                                        <td>{{ item.kode }}</td>
+                                        <td>{{ item.judul }}</td>
+                                        <td>{{ item.upbjj }}</td>
+                                        <td>{{ item.kategori }}</td>
+                                        <td>{{ item.lokasiRak }}</td>
+                                        <td>Rp {{ item.harga.toLocaleString('id-ID') }}</td>
+                                        <td>
+                                            <input type="number" v-model.number="item.qty" style="width: 70px; padding: 4px 8px; border: 1px solid var(--gray-300); border-radius: 4px; text-align: center;">
+                                        </td>
+                                        <td>{{ item.safety }}</td>
+                                        <td v-html="getStatusHtml(item)"></td>
+                                        <td v-html="item.catatanHTML || '-'"></td>
+                                    </tr>
+                                    <tr v-if="filteredAndSorted.length === 0">
+                                        <td colspan="10" style="text-align: center; padding: 2rem;">Tidak ada data yang sesuai filter.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
 
                 <section class="history-section card">
                     <h2>Histori Transaksi Terakhir</h2>
@@ -91,24 +191,30 @@
                 monitoringContainer.appendChild(card);
             });
 
-            // Render Rekap Table (Low Stock)
-            const rekapTableBody = document.querySelector('#rekapTable tbody');
-            dataBahanAjar.sort((a, b) => a.qty - b.qty).forEach(item => {
-                const row = document.createElement('tr');
-                const status = item.qty < item.safety ? '<span class="status-restock">Restock</span>' : '<span class="status-aman">Aman</span>';
-                row.innerHTML = `
-                    <td>${item.kode}</td>
-                    <td>${item.judul}</td>
-                    <td>${item.kategori}</td>
-                    <td>${item.qty}</td>
-                    <td>${status}</td>
-                `;
-                rekapTableBody.appendChild(row);
-            });
+            // Bagian ini dihapus karena digantikan oleh Vue.js (vue-rekap-app)
 
             // Render History Table
             const historyTableBody = document.querySelector('#historyTable tbody');
-            dataHistoriTransaksi.forEach(item => {
+            
+            // Ambil DO baru dari localStorage
+            let localDOs = [];
+            try {
+                localDOs = JSON.parse(localStorage.getItem('sitta_ut_do_list_main') || '[]');
+            } catch(e) {}
+            
+            const mappedLocalDOs = localDOs.map(doItem => ({
+                noDO: doItem.noDo,
+                tanggal: doItem.tanggalKirim,
+                item: doItem.paketKode || '-',
+                jumlah: doItem.paketKode ? doItem.paketKode.split(',').length : 1,
+                status: doItem.status
+            }));
+
+            // Gabungkan data dan urutkan berdasarkan noDO (dari terkecil ke terbesar)
+            const allHistory = [...mappedLocalDOs, ...dataHistoriTransaksi];
+            allHistory.sort((a, b) => a.noDO.localeCompare(b.noDO));
+
+            allHistory.forEach(item => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><strong>${item.noDO}</strong></td>
@@ -120,6 +226,94 @@
                 historyTableBody.appendChild(row);
             });
         });
+
+        // VUE APP UNTUK REKAP BAHAN AJAR (FILTER & SORT)
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    bahanAjarList: typeof dataBahanAjar !== 'undefined' ? dataBahanAjar : [],
+                    upbjjList: typeof upbjjList !== 'undefined' ? upbjjList : [],
+                    kategoriList: typeof kategoriList !== 'undefined' ? kategoriList : [],
+                    filter: {
+                        upbjj: '',
+                        kategori: '',
+                        showWarningOnly: false
+                    },
+                    sort: {
+                        by: 'qty', // default sort
+                        order: 'asc' // default asc
+                    }
+                }
+            },
+            computed: {
+                filteredAndSorted() {
+                    // 1. Filter
+                    let result = this.bahanAjarList.filter(item => {
+                        // Filter UT Daerah
+                        if (this.filter.upbjj && item.upbjj !== this.filter.upbjj) return false;
+                        
+                        // Filter Kategori (hanya berlaku jika UT Daerah juga dipilih)
+                        if (this.filter.upbjj && this.filter.kategori && item.kategori !== this.filter.kategori) return false;
+                        
+                        // Filter Warning Stock (qty < safety atau == 0)
+                        if (this.filter.showWarningOnly && item.qty >= item.safety) return false;
+                        
+                        return true;
+                    });
+
+                    // 2. Sort
+                    result.sort((a, b) => {
+                        let valA = a[this.sort.by];
+                        let valB = b[this.sort.by];
+                        
+                        let comparison = 0;
+                        if (typeof valA === 'string') {
+                            comparison = valA.localeCompare(valB);
+                        } else {
+                            comparison = valA - valB;
+                        }
+                        
+                        return this.sort.order === 'asc' ? comparison : -comparison;
+                    });
+
+                    return result;
+                }
+            },
+            watch: {
+                // Simpan perubahan (seperti saat edit Qty) ke localStorage
+                bahanAjarList: {
+                    handler(newVal) {
+                        localStorage.setItem('sitta_dataBahanAjar', JSON.stringify(newVal));
+                    },
+                    deep: true
+                },
+                // Dependent option logic: jika upbjj di-reset, maka reset juga kategorinya
+                'filter.upbjj'(newVal) {
+                    if (!newVal) {
+                        this.filter.kategori = '';
+                    }
+                }
+            },
+            methods: {
+                getStatusHtml(item) {
+                    if (item.qty === 0) {
+                        return '<span style="color: var(--danger); font-weight: 600;">&#10006; Kosong</span>';
+                    } else if (item.qty < item.safety) {
+                        return '<span style="color: var(--warning); font-weight: 600;">&#9888; Menipis</span>';
+                    } else {
+                        return '<span style="color: var(--success); font-weight: 600;">&#10004; Aman</span>';
+                    }
+                },
+                resetFilter() {
+                    this.filter.upbjj = '';
+                    this.filter.kategori = '';
+                    this.filter.showWarningOnly = false;
+                    this.sort.by = 'qty';
+                    this.sort.order = 'asc';
+                }
+            }
+        }).mount('#vue-rekap-app');
     </script>
 </body>
 </html>

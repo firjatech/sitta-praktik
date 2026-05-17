@@ -28,7 +28,7 @@ function getGreeting(name) {
     else if (hour >= 15 && hour < 18) greeting = "Selamat sore";
     else greeting = "Selamat malam";
 
-    return `${greeting}, ${name}`;
+    return `${greeting}, ${name}.`;
 }
 
 // Currency Formatter

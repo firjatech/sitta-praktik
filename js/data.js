@@ -1,15 +1,12 @@
 const upbjjList = ["Jakarta", "Surabaya", "Makassar", "Padang", "Denpasar"];
 const kategoriList = ["MK Wajib", "MK Pilihan", "Praktikum", "Problem-Based"];
-const pengirimanList = [
-    { kode: "REG", nama: "Reguler (3-5 hari)" },
-    { kode: "EXP", nama: "Ekspres (1-2 hari)" }
-];
+const pengirimanList = ["JNE Regular", "JNE Express"];
 const paketList = [
-    { kode: "PAKET-UT-001", nama: "PAKET IPS Dasar", isi: ["EKMA4116","EKMA4115"], harga: 120000 },
-    { kode: "PAKET-UT-002", nama: "PAKET IPA Dasar", isi: ["BIOL4201","FISIP4001"], harga: 140000 }
+    { kode: "PAKET-UT-001", nama: "PAKET IPS Dasar", isi: ["EKMA4116", "EKMA4115"], harga: 120000 },
+    { kode: "PAKET-UT-002", nama: "PAKET IPA Dasar", isi: ["BIOL4201", "FISIP4001"], harga: 140000 }
 ];
 
-const dataBahanAjar = [
+const defaultDataBahanAjar = [
     {
         kode: "EKMA4116",
         judul: "Pengantar Manajemen",
@@ -59,6 +56,13 @@ const dataBahanAjar = [
         gambar: "assets/pengantar komunikasi.jpg"
     }
 ];
+let dataBahanAjar = [];
+try {
+    const saved = localStorage.getItem('sitta_dataBahanAjar');
+    dataBahanAjar = saved ? JSON.parse(saved) : defaultDataBahanAjar;
+} catch(e) {
+    dataBahanAjar = defaultDataBahanAjar;
+}
 
 const dataTracking = {
     "DO2025-0001": {
